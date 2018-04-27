@@ -1,0 +1,9 @@
+double Behavior::convertIrVoltageToDistance(float voltage) const noexcept
+{
+  double voltageDividerR1 = 1000.0;
+  double voltageDividerR2 = 1000.0;
+
+  double sensorVoltage = (voltageDividerR1 + voltageDividerR2) / voltageDividerR2 * voltage;
+  double distance = 0.05244*pow(sensorVoltage, 6) - 0.5192*pow(sensorVoltage,5) + 2.075*pow(sensorVoltage,4) - 4.307*pow(sensorVoltage,3) + 4.971*pow(sensorVoltage,2) - 3.168*pow(sensorVoltage,1) + 1.026;
+  return distance;
+}
