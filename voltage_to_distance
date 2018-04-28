@@ -1,3 +1,5 @@
+#include <tgmath.h>
+
 double Behavior::convertIrVoltageToDistance(float voltage) const noexcept
 {
   double voltageDividerR1 = 1000.0;
