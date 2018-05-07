@@ -4,10 +4,6 @@
 #include <limits.h>
 using namespace std;
 
-/*bool Intersect(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4){
-}*/
-
-
 
 int main(int argc, char* argv[]){
     
@@ -33,8 +29,8 @@ int main(int argc, char* argv[]){
         ++number_of_lines;
     }
 
-    std::cout << "Number of lines in text file: " << number_of_lines << std::endl;
-
+    //Print out the number of lines in the txt file.
+    //std::cout << "Number of lines in text file: " << number_of_lines << std::endl;
 
     double x[2*number_of_lines];
     double y[2*number_of_lines];
@@ -51,6 +47,7 @@ int main(int argc, char* argv[]){
     myfile1 >> fill;
     }
 
+    //Create the intervals for the walls
     double x_min[number_of_lines];
     double y_min[number_of_lines];
     double x_max[number_of_lines];
@@ -73,14 +70,13 @@ int main(int argc, char* argv[]){
        }
     }
 
-    for(int i = 0 ; i<number_of_lines;i++){
-       std::cout << " xmin = " << x_min[i] << " xmax = " << x_max[i] << " ymin = " << y_min[i] << " ymax = " << y_max[i] << std::endl;
-    }
+    //print the intervall for the walls.
+    //for(int i = 0 ; i<number_of_lines;i++){
+    //   std::cout << " xmin = " << x_min[i] << " xmax = " << x_max[i] << " ymin = " << y_min[i] << " ymax = " << y_max[i] << std::endl;
+    //}
 
 
-    //Initialize how many nodes will exist in our grid. rows are the amount of rows in our grid and column is the amount of column in our grid.
-    // The grid is represented by 2 vectors x_pos and y_pos and creates a squared grid. x_pos[0] and y_pos[0] represent the position in the
-    // southleft corner and x_pos[rows-1] and y_pos[columns-1] represents the position in the northeast corner.
+    //Initialize the size of our grid. The amount of nodes are equal to size².
     int size = 15;
     double x_pos[size-1];
     double y_pos[size-1];
@@ -113,10 +109,12 @@ int main(int argc, char* argv[]){
 
     int p[size-1][size-1];
 
-    for(int i = 0; i < size; i++){
-       std::cout << x_pos[i] << " " << y_pos[i] << std::endl; 
-    } 
+    //Print out the x_pos and y_pos of the nodes
+    //for(int i = 0; i < size; i++){
+    //   std::cout << x_pos[i] << " " << y_pos[i] << std::endl; 
+    //} 
 
+    // If any nodes are too close to the wall. Set it to 0. Otherwise it is set to 1.
     for(int i = 0; i <size; i++){
        for(int j = 0; j <size; j++){
           for(int k = 0; k < number_of_lines; k++){
@@ -130,10 +128,9 @@ int main(int argc, char* argv[]){
           }
        }
     }
-    
-    
-  
-    for(int i = 0; i<size;i++){
+
+    //Print out the nodes in the terminal  
+    for(int i = size-1; i>=0 ;i--){
        for(int j = 0; j < size; j++){
           std::cout << p[i][j];
        }
