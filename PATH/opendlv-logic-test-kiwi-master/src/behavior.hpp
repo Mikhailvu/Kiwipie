@@ -54,7 +54,6 @@ class Behavior {
   node m_node;
   uint16_t m_counter;
   bool stop;
-  double m_previousDistance;
   opendlv::proxy::DistanceReading m_frontUltrasonicReading;
   opendlv::proxy::DistanceReading m_rearUltrasonicReading;
   opendlv::proxy::VoltageReading m_leftIrReading;

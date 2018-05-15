@@ -304,6 +304,7 @@ vector<node> Path::getNode(double src_x, double src_y, double goal_x, double goa
     }
 
     std::reverse(n.begin(), n.end());
+    n.erase(n.begin());
     
     for(uint16_t i = 0; i<n.size(); i++){
        std::cout << "Node " << i+1 << ": " << "Row = " << n[i].row << " Column = " << n[i].column << std::endl;
