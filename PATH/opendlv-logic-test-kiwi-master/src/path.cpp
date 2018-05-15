@@ -6,7 +6,7 @@
 #include <tgmath.h>
 #include <vector>
 #include <algorithm>
-#define caps 40
+#define caps 15
 using namespace std;
 
 Path::Path() noexcept:

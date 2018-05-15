@@ -84,6 +84,7 @@ int32_t main(int32_t argc, char **argv) {
     auto atFrequency{[&VERBOSE, &behavior, &od4, &dt, &time, &FORWARD_SPEED, &TURNSPEED_ANGLE, &TURN_ANGLE, &REVERSE_SPEED, &REVERSETURNSPEED_ANGLE, REVERSETURN_ANGLE]() -> bool
       {
         if(time >= 30){
+                behavior.updatePath();
         	behavior.step(FORWARD_SPEED, TURNSPEED_ANGLE, TURN_ANGLE, REVERSE_SPEED, REVERSETURNSPEED_ANGLE, REVERSETURN_ANGLE);
 	}
         auto groundSteeringAngleRequest = behavior.getGroundSteeringAngle();

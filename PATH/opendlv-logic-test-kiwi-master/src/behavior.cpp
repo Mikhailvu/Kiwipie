@@ -23,7 +23,9 @@
 Behavior::Behavior() noexcept:
   m_nodes{},
   m_node{},
-  counter{2},
+  m_counter{2},
+  stop{},
+  m_previousDistance{},
   m_frontUltrasonicReading{},
   m_rearUltrasonicReading{},
   m_leftIrReading{},
@@ -88,6 +90,7 @@ void Behavior::setNodes(double src_x, double src_y, double goal_x, double goal_y
 {
   Path path;
   m_nodes = path.getNode(src_x,src_y,goal_x,goal_y);
+  stop = false;
   m_node = m_nodes[1];
 }
 
@@ -120,7 +123,8 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
   double rightDistance = convertIrVoltageToDistance(rightIrReading.voltage());
   double x_pos = pos.x();
   double y_pos = pos.y();
-  double yaw_pos = pos.yaw();
+  float yaw_pos = pos.yaw();
+  
 
   float pedalPosition = 0.0f;
   float groundSteeringAngle = 0.0f;
@@ -133,6 +137,10 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
 // STATE E = REVERSE LEFT (CLOCKWISE)
 // STATE F = REVERSE RIGHT (COUNTERCLOCKWISE)	
 
+  float yaw_node = (float)atan2(m_node.y-y_pos,m_node.x-x_pos);
+  float delta_yaw = yaw_node - yaw_pos;
+ 
+  
   switch(state){
 	case 'A':
 
@@ -240,6 +248,23 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
 			groundSteeringAngle = 0.0f;
   }
 
+   if(stop){
+      pedalPosition = 0.0f;
+   }
+
+   pedalPosition = FORWARD_SPEED;
+   if(delta_yaw < 0.01 && delta_yaw > 0.01){
+     	groundSteeringAngle = 0.0f;
+   }else if(delta_yaw > M_PI/2){
+     	groundSteeringAngle = -0.40f;
+  }else if(delta_yaw < -M_PI/2){
+    	groundSteeringAngle = 0.40f;
+  }else if(delta_yaw < 0){
+    	groundSteeringAngle = 0.25f*delta_yaw;
+  }else{
+     	groundSteeringAngle = -0.25f*delta_yaw;
+  }
+
   {
     std::lock_guard<std::mutex> lock1(m_groundSteeringAngleRequestMutex);
     std::lock_guard<std::mutex> lock2(m_pedalPositionRequestMutex);
@@ -254,7 +279,7 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
   }
 
   //std::cout << "F = "<< frontDistance << " B = " << rearDistance << " L = " << leftDistance << " R = " << rightDistance << " State = " << state  <<std::endl;
-  std::cout << "x = " << x_pos << " y = " << y_pos << " yaw = " << yaw_pos << " Counter = " << counter << std::endl;
+  std::cout << "yaw_pos = " << yaw_pos << " yaw_node = " << yaw_node << " delta_yaw = " << delta_yaw << " Counter = " << m_counter <<  " delta_x = " << m_node.x - x_pos << " delta_y = " << m_node.y - y_pos << std::endl;
 }
 
 // TODO: This is a rough estimate, improve by looking into the sensor specifications.
@@ -270,8 +295,13 @@ return distance;
 }
 
 void Behavior::updatePath() noexcept{
-   if( sqrt(pow(m_pos.x()-m_node.x,2)+pow(m_pos.y()-m_node.y,2))  < 0.3 ){
-      m_node = m_nodes[counter];
-      counter++;
+   
+   if(sqrt(pow(m_pos.x()-m_node.x,2)+pow(m_pos.y()-m_node.y,2))  < 0.3 && sqrt(pow(m_pos.x()-m_node.x,2)+pow(m_pos.y()-m_node.y,2)) >  m_previousDistance && m_counter==m_nodes.size()){
+      stop = true;
    }
+   else if( sqrt(pow(m_pos.x()-m_node.x,2)+pow(m_pos.y()-m_node.y,2))  < 0.3 ){
+      m_node = m_nodes[m_counter];
+      m_counter++;
+   }
+   m_previousDistance = pow(m_pos.x()-m_node.x,2)+pow(m_pos.y()-m_node.y,2);
 }

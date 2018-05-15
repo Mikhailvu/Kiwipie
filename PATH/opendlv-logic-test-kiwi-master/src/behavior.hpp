@@ -52,7 +52,9 @@ class Behavior {
  private:
   std::vector<node> m_nodes;
   node m_node;
-  int counter;
+  uint16_t m_counter;
+  bool stop;
+  double m_previousDistance;
   opendlv::proxy::DistanceReading m_frontUltrasonicReading;
   opendlv::proxy::DistanceReading m_rearUltrasonicReading;
   opendlv::proxy::VoltageReading m_leftIrReading;
