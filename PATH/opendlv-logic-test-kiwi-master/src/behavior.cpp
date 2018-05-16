@@ -135,10 +135,6 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
 // STATE D = REVERSE
 // STATE E = REVERSE LEFT (CLOCKWISE)
 // STATE F = REVERSE RIGHT (COUNTERCLOCKWISE)	
-
-  float yaw_node = (float)atan2(m_node.y-y_pos,m_node.x-x_pos);
-  float delta_yaw = yaw_node - yaw_pos;
- 
   
   switch(state){
 	case 'A':
@@ -247,26 +243,45 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
 			groundSteeringAngle = 0.0f;
   }
 
-   
-
-   if(stop){
+  float yaw_node = (float)atan2(m_node.y-y_pos,m_node.x-x_pos);
+  float delta_yaw;
+ 
+  if((yaw_node < 0 && yaw_pos < 0) || (yaw_node > 0 && yaw_pos > 0)){
+     delta_yaw = yaw_node - yaw_pos;
+     if(stop){
         pedalPosition = 0.0f;
 	groundSteeringAngle = 0.0f;
-   }else if(delta_yaw < 0.01 && delta_yaw > 0.01){
-     	groundSteeringAngle = 0.0f;
+     }else if(delta_yaw < 0){
+    	groundSteeringAngle = -0.5f;
 	pedalPosition = FORWARD_SPEED;
-   }else if(delta_yaw > M_PI/2){
-     	groundSteeringAngle = -0.40f;
+     }else{
+     	groundSteeringAngle = 0.5f;
 	pedalPosition = FORWARD_SPEED;
-  }else if(delta_yaw < -M_PI/2){
-    	groundSteeringAngle = 0.40f;
+     }
+  }else if(yaw_node > 0 && yaw_pos < 0){
+     delta_yaw = yaw_node - yaw_pos;
+     if(stop){
+        pedalPosition = 0.0f;
+	groundSteeringAngle = 0.0f;
+     }else if(delta_yaw < M_PI){
+    	groundSteeringAngle = 0.5f;
 	pedalPosition = FORWARD_SPEED;
-  }else if(delta_yaw < 0){
-    	groundSteeringAngle = 0.25f*delta_yaw;
+     }else{
+     	groundSteeringAngle = -0.5f;
 	pedalPosition = FORWARD_SPEED;
+     }
   }else{
-     	groundSteeringAngle = -0.25f*delta_yaw;
+     delta_yaw = yaw_pos - yaw_node;
+     if(stop){
+        pedalPosition = 0.0f;
+	groundSteeringAngle = 0.0f;
+     }else if(delta_yaw < M_PI){
+    	groundSteeringAngle = -0.5f;
 	pedalPosition = FORWARD_SPEED;
+     }else{
+     	groundSteeringAngle = 0.5f;
+	pedalPosition = FORWARD_SPEED;
+     }
   }
 
   
