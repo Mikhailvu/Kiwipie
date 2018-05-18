@@ -2,7 +2,7 @@
 #include<opencv2/highgui/highgui.hpp>
 #include<opencv2/imgproc/imgproc.hpp>
 #include<opencv2/opencv.hpp>
-
+#include<cstdio>
 #include<iostream>
 /*using namespace std;
 using namespace cv; */
@@ -25,7 +25,7 @@ int main() {
 		return(0);												// and exit program
 	}
 */
-	cv::String test ("sample-img.PNG");
+	cv::String test ("yelleft.png");
 	cv::Mat imgOriginal =cv::imread(test);		// Input image
 	cv::Mat hsvImg;				// HSV Image
 	cv::Mat threshImg;			// Thresh Image
@@ -34,14 +34,14 @@ int main() {
 
 	char charCheckForEscKey = 0; 
 
-	int lowH = 21;							// Set Hue
-	int highH = 30;
+	int lowH = 20;							// Set Hue
+	int highH = 35;
 
-	int lowS = 200;							// Set Saturation
-	int highS = 255;
+	int lowS = 190;							// Set Saturation
+	int highS = 270;
 
-	int lowV = 102;							// Set Value
-	int highV = 225;
+	int lowV = 50;							// Set Value
+	int highV = 300;
 	// HUE for YELLOW is 21-30.
 	// Adjust Saturation and Value depending on the lighting condition of the environment as well as the surface of the object.
 
@@ -103,7 +103,11 @@ int main() {
 		cv::imshow("imgOriginal", imgOriginal);					// show windows
 		cv::imshow("threshImg", threshImg);
 
-		charCheckForEscKey = cv::waitKey(1);					// delay and get key press
+		cv::imwrite("imOrig.png", imgOriginal, int 0);
+cv::imwrite("tresh.png", threshImg, int 0);
+		charCheckForEscKey = cv::waitKey(1);
+
+		/*std::getchar();*/					// delay and get key press
 	/*}*/
 	
 	return(0);											

@@ -1,0 +1,4 @@
+g++ ObjectTracker.cpp -o app `pkg-config --cflags --libs opencv`
+
+raspistill -o yel_mid_far.jpg
+
