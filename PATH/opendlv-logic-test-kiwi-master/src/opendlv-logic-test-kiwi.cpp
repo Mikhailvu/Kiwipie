@@ -33,11 +33,8 @@ int32_t main(int32_t argc, char **argv) {
     bool const VERBOSE{commandlineArguments.count("verbose") != 0};
     uint16_t const CID = std::stoi(commandlineArguments["cid"]);
     float const FORWARD_SPEED = std::stof(commandlineArguments["forward_speed"]);
-    float const TURNSPEED_ANGLE = std::stof(commandlineArguments["turnspeed_angle"]);
     float const TURN_ANGLE = std::stof(commandlineArguments["turn_angle"]);
     float const REVERSE_SPEED = std::stof(commandlineArguments["reverse_speed"]);
-    float const REVERSETURNSPEED_ANGLE = std::stof(commandlineArguments["reverseturnspeed_angle"]);
-    float const REVERSETURN_ANGLE = std::stof(commandlineArguments["reverseturn_angle"]);
     float const FREQ = std::stof(commandlineArguments["freq"]);
     double const SRC_X = std::stof(commandlineArguments["src_x"]);
     double const SRC_Y = std::stof(commandlineArguments["src_y"]);
@@ -81,12 +78,17 @@ int32_t main(int32_t argc, char **argv) {
     od4.dataTrigger(opendlv::proxy::VoltageReading::ID(), onVoltageReading);
     od4.dataTrigger(opendlv::sim::Frame::ID(), onPositionReading);
 
-    auto atFrequency{[&VERBOSE, &behavior, &od4, &dt, &time, &FORWARD_SPEED, &TURNSPEED_ANGLE, &TURN_ANGLE, &REVERSE_SPEED, &REVERSETURNSPEED_ANGLE, REVERSETURN_ANGLE]() -> bool
+    auto atFrequency{[&VERBOSE, &behavior, &od4, &dt, &time, &FORWARD_SPEED, &TURN_ANGLE, &REVERSE_SPEED]() -> bool
       {
         if(time >= 30){
-                behavior.updatePath();
-        	behavior.step(FORWARD_SPEED, TURNSPEED_ANGLE, TURN_ANGLE, REVERSE_SPEED, REVERSETURNSPEED_ANGLE, REVERSETURN_ANGLE);
+		if((int)time%5 == 0){
+			behavior.updatePath2();
+        	}else{
+                	behavior.updatePath();
+        		behavior.step(FORWARD_SPEED, TURN_ANGLE, REVERSE_SPEED);
+		}
 	}
+
         auto groundSteeringAngleRequest = behavior.getGroundSteeringAngle();
         auto pedalPositionRequest = behavior.getPedalPositionRequest();
 

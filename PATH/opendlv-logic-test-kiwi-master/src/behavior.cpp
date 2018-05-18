@@ -39,7 +39,9 @@ Behavior::Behavior() noexcept:
   m_groundSteeringAngleRequestMutex{},
   m_pedalPositionRequestMutex{},
   m_posMutex{},
-  state{'A'}
+  state{'A'},
+  end_x{},
+  end_y{}
 {
 }
 
@@ -89,13 +91,15 @@ void Behavior::setNodes(double src_x, double src_y, double goal_x, double goal_y
 {
   Path path;
   m_nodes = path.getNode(src_x,src_y,goal_x,goal_y);
+  end_x = goal_x;
+  end_y = goal_y;
   stop = false;
   m_node = m_nodes[0];
 }
 
 
 
-void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE, float REVERSE_SPEED, float REVERSETURNSPEED_ANGLE, float REVERSETURN_ANGLE) noexcept
+void Behavior::step(float FORWARD_SPEED, float TURN_ANGLE, float REVERSE_SPEED) noexcept
 {
   opendlv::proxy::DistanceReading frontUltrasonicReading;
   opendlv::proxy::DistanceReading rearUltrasonicReading;
@@ -118,8 +122,8 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
 
   float frontDistance = frontUltrasonicReading.distance();
   float rearDistance = rearUltrasonicReading.distance();
-  double leftDistance = convertIrVoltageToDistance(leftIrReading.voltage());
-  double rightDistance = convertIrVoltageToDistance(rightIrReading.voltage());
+  //double leftDistance = convertIrVoltageToDistance(leftIrReading.voltage());
+  //double rightDistance = convertIrVoltageToDistance(rightIrReading.voltage());
   double x_pos = pos.x();
   double y_pos = pos.y();
   float yaw_pos = pos.yaw();
@@ -127,7 +131,7 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
 
   float pedalPosition = 0.0f;
   float groundSteeringAngle = 0.0f;
-  double random = (double) rand()/ (RAND_MAX) ;
+  //double random = (double) rand()/ (RAND_MAX) ;
 
 // State A = FORWARD
 // State B = TURN LEFT
@@ -136,153 +140,81 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
 // STATE E = REVERSE LEFT (CLOCKWISE)
 // STATE F = REVERSE RIGHT (COUNTERCLOCKWISE)	
   
+
+  float yaw_node = (float)atan2(m_node.y-y_pos,m_node.x-x_pos);
+  float delta_yaw;
+ 
+  
+
   switch(state){
 	case 'A':
 
-      		if( frontDistance < 0.3 || (frontDistance < 0.5 && leftDistance < 0.3 && rightDistance < 0.3)){
+      		if(frontDistance < 0.3){
 			state = 'D';
-		}else if(frontDistance < 0.8){
-			if(leftDistance > 0.4 && 0.4 < rightDistance){
-				if(0.5 > random){
-					state = 'B';
-				}
-				 else{
-					state = 'C';
-				}  
-			}else if(leftDistance > rightDistance){
-				state = 'B';
-			}
-			else{
-				state = 'C';
-			}
-
-		}else if(leftDistance < 0.25){
-			state = 'C';
-		}else if(rightDistance < 0.25){
-			state = 'B';
 		}else{
-			pedalPosition = FORWARD_SPEED;
-  			groundSteeringAngle = 0.0f;
+			if((yaw_node < 0 && yaw_pos < 0) || (yaw_node > 0 && yaw_pos > 0)){
+     				delta_yaw = yaw_node - yaw_pos;
+     				if(stop){
+        				pedalPosition = 0.0f;
+					groundSteeringAngle = 0.0f;
+     				}else if(delta_yaw < 0){
+    					groundSteeringAngle = -TURN_ANGLE;
+					pedalPosition = FORWARD_SPEED;
+     				}else{
+     					groundSteeringAngle = TURN_ANGLE;
+					pedalPosition = FORWARD_SPEED;
+     				}
+  			}else if(yaw_node > 0 && yaw_pos < 0){
+     				delta_yaw = yaw_node - yaw_pos;
+     				if(stop){
+        				pedalPosition = 0.0f;
+					groundSteeringAngle = 0.0f;
+     				}else if(delta_yaw < M_PI){
+    					groundSteeringAngle = TURN_ANGLE;
+					pedalPosition = FORWARD_SPEED;
+     				}else{
+     					groundSteeringAngle = -TURN_ANGLE;
+					pedalPosition = FORWARD_SPEED;
+     				}
+  			}else{
+     				delta_yaw = yaw_pos - yaw_node;
+     				if(stop){
+        				pedalPosition = 0.0f;
+					groundSteeringAngle = 0.0f;
+     				}else if(delta_yaw < M_PI){
+    					groundSteeringAngle = -TURN_ANGLE;
+					pedalPosition = FORWARD_SPEED;
+     				}else{
+     					groundSteeringAngle = TURN_ANGLE;
+					pedalPosition = FORWARD_SPEED;
+     				}
+  			}
 		}
 
 		break;
 
-	case 'B':
-		if(frontDistance < 0.4){
-			state = 'F';
-		}
-		else if(frontDistance > 0.8 && rightDistance > 0.3){
-			state = 'A';
-		}else if(rightDistance > (leftDistance + 0.01) ){
-			state = 'C';
-		}else{
-			pedalPosition = TURNSPEED_ANGLE;
-  			groundSteeringAngle = TURN_ANGLE;
-		}
-		break;
-
-	case 'C':
-		if(frontDistance < 0.4){
-			state = 'E';
-		}
-		else if(frontDistance > 0.8 && leftDistance > 0.3){
-			state = 'A';
-		}else if(leftDistance > (rightDistance+0.01)){
-			state = 'B';
-		}else{
-			pedalPosition = TURNSPEED_ANGLE;
-  			groundSteeringAngle = -TURN_ANGLE;
-		}
-
-		break;
+	
 
 	case 'D':
 		if(rearDistance < 0.3){
-			if(frontDistance > rearDistance)
+			if(frontDistance > rearDistance){
 				state = 'A';
-		}else if(leftDistance > 0.3 && frontDistance > 0.2){
-			state = 'E';
-		}else if(rightDistance > 0.3 &&  frontDistance > 0.2){
-			state = 'F';
+			}
+		}else if(frontDistance > 0.5){
+			state = 'A';
 		}else{
 			pedalPosition = -REVERSE_SPEED;
   			groundSteeringAngle = 0.0f;
 		}
 		break;
 
-	case 'E':
-		if(rearDistance < 0.4){
-			if(frontDistance > rearDistance)
-				state = 'A';
-		}else if(frontDistance > 0.7){
-			state = 'C';
-		}else if(rightDistance > leftDistance){
-			state = 'F';
-		}else{
-			pedalPosition = -REVERSETURNSPEED_ANGLE;
-  			groundSteeringAngle = -REVERSETURN_ANGLE;
-		}
-		break;
-
-	case 'F':
-		if(rearDistance < 0.4){
-			if(frontDistance > rearDistance)
-				state = 'A';
-		}else if(frontDistance > 0.7){
-			state = 'B';
-		}else if(leftDistance > rightDistance){
-			state = 'E';
-		}else{
-			pedalPosition = -REVERSETURNSPEED_ANGLE;
-  			groundSteeringAngle = REVERSETURN_ANGLE;
-		}
-		break;
 
 		default :
 			pedalPosition = 0.0f;
 			groundSteeringAngle = 0.0f;
   }
 
-  float yaw_node = (float)atan2(m_node.y-y_pos,m_node.x-x_pos);
-  float delta_yaw;
- 
-  if((yaw_node < 0 && yaw_pos < 0) || (yaw_node > 0 && yaw_pos > 0)){
-     delta_yaw = yaw_node - yaw_pos;
-     if(stop){
-        pedalPosition = 0.0f;
-	groundSteeringAngle = 0.0f;
-     }else if(delta_yaw < 0){
-    	groundSteeringAngle = -0.5f;
-	pedalPosition = FORWARD_SPEED;
-     }else{
-     	groundSteeringAngle = 0.5f;
-	pedalPosition = FORWARD_SPEED;
-     }
-  }else if(yaw_node > 0 && yaw_pos < 0){
-     delta_yaw = yaw_node - yaw_pos;
-     if(stop){
-        pedalPosition = 0.0f;
-	groundSteeringAngle = 0.0f;
-     }else if(delta_yaw < M_PI){
-    	groundSteeringAngle = 0.5f;
-	pedalPosition = FORWARD_SPEED;
-     }else{
-     	groundSteeringAngle = -0.5f;
-	pedalPosition = FORWARD_SPEED;
-     }
-  }else{
-     delta_yaw = yaw_pos - yaw_node;
-     if(stop){
-        pedalPosition = 0.0f;
-	groundSteeringAngle = 0.0f;
-     }else if(delta_yaw < M_PI){
-    	groundSteeringAngle = -0.5f;
-	pedalPosition = FORWARD_SPEED;
-     }else{
-     	groundSteeringAngle = 0.5f;
-	pedalPosition = FORWARD_SPEED;
-     }
-  }
+  
 
   
 
@@ -300,28 +232,33 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
   }
 
   //std::cout << "F = "<< frontDistance << " B = " << rearDistance << " L = " << leftDistance << " R = " << rightDistance << " State = " << state  <<std::endl;
-  std::cout << "yaw_pos = " << yaw_pos << " yaw_node = " << yaw_node << " delta_yaw = " << delta_yaw << " Counter = " << m_counter <<  " delta_x = " << m_node.x - x_pos << " delta_y = " << m_node.y - y_pos << std::endl;
+  //std::cout << "yaw_pos = " << yaw_pos << " yaw_node = " << yaw_node << " delta_yaw = " << delta_yaw << " Counter = " << m_counter <<  " delta_x = " << m_node.x - x_pos << " delta_y = " << m_node.y - y_pos << std::endl;
 }
 
 // TODO: This is a rough estimate, improve by looking into the sensor specifications.
-double Behavior::convertIrVoltageToDistance(float voltage) const noexcept
-{
+double Behavior::convertIrVoltageToDistance(float voltage) const noexcept{
   double voltageDividerR1 = 1000.0;
   double voltageDividerR2 = 1000.0;
 
   double sensorVoltage = (voltageDividerR1 + voltageDividerR2) / voltageDividerR2 * voltage;
   double distance = 0.001645*pow(sensorVoltage, 8) - 0.04791*pow(sensorVoltage,7) + 0.4231*pow(sensorVoltage,6) - 1.826*pow(sensorVoltage,5) + 4.495*pow(sensorVoltage,4) - 6.694*pow(sensorVoltage,3) + 6.115*pow(sensorVoltage,2) - 3.354*pow(sensorVoltage,1) + 1.016;
 return distance;
-  return distance;
 }
 
 void Behavior::updatePath() noexcept{
    
-   if(sqrt(pow(m_pos.x()-m_node.x,2)+pow(m_pos.y()-m_node.y,2))  < 0.3 && m_counter==m_nodes.size()){
+   if(sqrt(pow(m_pos.x()-m_node.x,2)+pow(m_pos.y()-m_node.y,2))  < 0.2 && m_counter==m_nodes.size()){
       stop = true;
    }
-   else if( sqrt(pow(m_pos.x()-m_node.x,2)+pow(m_pos.y()-m_node.y,2))  < 0.3 ){
+   else if( sqrt(pow(m_pos.x()-m_node.x,2)+pow(m_pos.y()-m_node.y,2))  < 0.2 ){
       m_node = m_nodes[m_counter];
       m_counter++;
    }
+}
+
+void Behavior::updatePath2() noexcept{
+  Path path;
+  m_nodes = path.getNode(m_pos.x(),m_pos.y(),end_x,end_y);
+  m_node = m_nodes[0];
+  m_counter = 1;
 }

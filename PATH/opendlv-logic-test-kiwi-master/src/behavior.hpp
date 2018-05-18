@@ -37,6 +37,7 @@ class Behavior {
  public:
   void setNodes(double,double,double,double) noexcept;
   void updatePath() noexcept;
+  void updatePath2() noexcept;
   opendlv::proxy::GroundSteeringRequest getGroundSteeringAngle() noexcept;
   opendlv::proxy::PedalPositionRequest getPedalPositionRequest() noexcept;
   void setFrontUltrasonic(opendlv::proxy::DistanceReading const &) noexcept;
@@ -44,7 +45,7 @@ class Behavior {
   void setLeftIr(opendlv::proxy::VoltageReading const &) noexcept;
   void setRightIr(opendlv::proxy::VoltageReading const &) noexcept;
   void setPos(opendlv::sim::Frame const &) noexcept;
-  void step(float,float,float,float,float,float) noexcept;
+  void step(float,float,float) noexcept;
 
  private:
   double convertIrVoltageToDistance(float) const noexcept;
@@ -69,6 +70,8 @@ class Behavior {
   std::mutex m_pedalPositionRequestMutex;
   std::mutex m_posMutex;
   char state;
+  double end_x;
+  double end_y;
 };
 
 #endif

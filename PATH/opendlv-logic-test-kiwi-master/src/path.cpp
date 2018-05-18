@@ -168,7 +168,7 @@ vector<node> Path::getNode(double src_x, double src_y, double goal_x, double goa
 
     double *x = new double[2*number_of_lines];
     double *y = new double[2*number_of_lines];
-    double sd = 0.15;
+    double sd = 0.20;
 
     char fill;
 
@@ -235,12 +235,12 @@ vector<node> Path::getNode(double src_x, double src_y, double goal_x, double goa
     }
 
     for(int i = 0; i<caps;i++){
-       x_pos[i] = -largest_value + largest_value*2*(i+1)/(caps+1);
+       x_pos[i] = -largest_value + largest_value*2*(i)/(caps-1);
        //std::cout << x_pos[i] << std::endl;
     }
 
     for(int j = 0; j<caps;j++){
-       y_pos[j] = -largest_value + largest_value*2*(j+1)/(caps+1);
+       y_pos[j] = -largest_value + largest_value*2*(j)/(caps-1);
        //std::cout << y_pos[j] << std::endl;
     }
 
@@ -271,7 +271,7 @@ vector<node> Path::getNode(double src_x, double src_y, double goal_x, double goa
 
     for(int i = 0; i < caps; i++){
        for(int j = 0; j < caps; j++){
-          if(sqrt(pow(x_pos[j]-src.x,2) + pow(y_pos[i]-src.y,2)) < distance){
+          if(sqrt(pow(x_pos[j]-src.x,2) + pow(y_pos[i]-src.y,2)) < distance && p[i][j]){
               distance = sqrt(pow(x_pos[j]-src.x,2) + pow(y_pos[i]-src.y,2));
               src.row = i;
               src.column = j;
@@ -283,7 +283,7 @@ vector<node> Path::getNode(double src_x, double src_y, double goal_x, double goa
 
     for(int i = 0; i < caps; i++){
        for(int j = 0; j < caps; j++){
-          if(sqrt(pow(x_pos[j]-goal.x,2) + pow(y_pos[i]-goal.y,2)) < distance){
+          if(sqrt(pow(x_pos[j]-goal.x,2) + pow(y_pos[i]-goal.y,2)) < distance && p[i][j]){
               distance = sqrt(pow(x_pos[j]-goal.x,2) + pow(y_pos[i]-goal.y,2));
               goal.row = i;
               goal.column = j;
@@ -306,11 +306,11 @@ vector<node> Path::getNode(double src_x, double src_y, double goal_x, double goa
     std::reverse(n.begin(), n.end());
     n.erase(n.begin());
     
-    for(uint16_t i = 0; i<n.size(); i++){
-       std::cout << "Node " << i+1 << ": " << "Row = " << n[i].row << " Column = " << n[i].column << std::endl;
-    }
-    std::cout << "Start node: " << src.row << " " << src.column << std::endl;
-    std::cout << "Goal node: " << goal.row << " " << goal.column << std::endl;
+    //for(uint16_t i = 0; i<n.size(); i++){
+    //   std::cout << "Node " << i+1 << ": " << "Row = " << n[i].row << " Column = " << n[i].column << std::endl;
+    //}
+    //std::cout << "Start node: " << src.row << " " << src.column << std::endl;
+    //std::cout << "Goal node: " << goal.row << " " << goal.column << std::endl;
 
     //Print out the nodes in the terminal  
     for(int i = caps-1; i>=0 ;i--){
@@ -337,9 +337,9 @@ vector<node> Path::getNode(double src_x, double src_y, double goal_x, double goa
     }
 
     for(uint16_t i = 0; i<n.size(); i++){
-       n[i].x = -largest_value + largest_value*2*(n[i].column+1)/(caps+1);
-       n[i].y = -largest_value + largest_value*2*(n[i].row+1)/(caps+1);
-       std::cout << "Node " << i+1 << ": " << "x = "<<n[i].x << " y = " << n[i].y << std::endl;
+       n[i].x = -largest_value + largest_value*2*(n[i].column)/(caps-1);
+       n[i].y = -largest_value + largest_value*2*(n[i].row)/(caps-1);
+       //std::cout << "Node " << i+1 << ": " << "x = "<<n[i].x << " y = " << n[i].y << std::endl;
     }
    return n;
 }
