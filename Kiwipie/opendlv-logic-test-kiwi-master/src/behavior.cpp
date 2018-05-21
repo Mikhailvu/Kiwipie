@@ -26,14 +26,12 @@ Behavior::Behavior() noexcept:
   m_rightIrReading{},
   m_groundSteeringAngleRequest{},
   m_pedalPositionRequest{},
-  m_image{},
   m_frontUltrasonicReadingMutex{},
   m_rearUltrasonicReadingMutex{},
   m_leftIrReadingMutex{},
   m_rightIrReadingMutex{},
   m_groundSteeringAngleRequestMutex{},
   m_pedalPositionRequestMutex{},
-  m_imageMutex{},
   state{'A'}
 {
 }
@@ -74,10 +72,6 @@ void Behavior::setRightIr(opendlv::proxy::VoltageReading const &rightIrReading) 
   m_rightIrReading = rightIrReading;
 }
 
-void Behavior::setImage(opendlv::logic::sensation::Point const &image) noexcept{
-  std::lock_guard<std::mutex> lock(m_imageMutex);
-  m_image = image;
-}
 
 void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE, float REVERSE_SPEED, float REVERSETURNSPEED_ANGLE, float REVERSETURN_ANGLE) noexcept
 {
@@ -85,28 +79,23 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
   opendlv::proxy::DistanceReading rearUltrasonicReading;
   opendlv::proxy::VoltageReading leftIrReading;
   opendlv::proxy::VoltageReading rightIrReading;
-  opendlv::logic::sensation::Point image;
 
   {
     std::lock_guard<std::mutex> lock1(m_frontUltrasonicReadingMutex);
     std::lock_guard<std::mutex> lock2(m_rearUltrasonicReadingMutex);
     std::lock_guard<std::mutex> lock3(m_leftIrReadingMutex);
     std::lock_guard<std::mutex> lock4(m_rightIrReadingMutex);
-    std::lock_guard<std::mutex> lock5(m_imageMutex);
 
     frontUltrasonicReading = m_frontUltrasonicReading;
     rearUltrasonicReading = m_rearUltrasonicReading;
     leftIrReading = m_leftIrReading;
     rightIrReading = m_rightIrReading;
-    image = m_image;
   }
 
   float frontDistance = frontUltrasonicReading.distance();
   float rearDistance = rearUltrasonicReading.distance();
   double leftDistance = convertIrVoltageToDistance(leftIrReading.voltage());
   double rightDistance = convertIrVoltageToDistance(rightIrReading.voltage());
-  float azimuthAngle = image.azimuthAngle();
-  float distance = image.distance();
 
   float pedalPosition = 0.0f;
   float groundSteeringAngle = 0.0f;
@@ -122,80 +111,102 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
   switch(state){
 	case 'A':
 
-      		if(frontDistance < 0.3){
+      		if( frontDistance < 0.3 || (frontDistance < 0.5 && leftDistance < 0.3 && rightDistance < 0.3)){
 			state = 'D';
-		}else if(azimuthAngle > 2){
-			state = 'B';
-                }else if(azimuthAngle < -2){
+		}else if(frontDistance < 0.8){
+			if(leftDistance > 0.4 && 0.4 < rightDistance){
+				if(0.5 > random){
+					state = 'B';
+				}
+				 else{
+					state = 'C';
+				}  
+			}else if(leftDistance > rightDistance){
+				state = 'B';
+			}
+			else{
+				state = 'C';
+			}
+
+		}else if(leftDistance < 0.25){
 			state = 'C';
+		}else if(rightDistance < 0.25){
+			state = 'B';
 		}else{
-			pedalPosition = FORWARD_SPEED*frontDistance;
+			pedalPosition = FORWARD_SPEED;
   			groundSteeringAngle = 0.0f;
 		}
 
 		break;
 
 	case 'B':
-		if(azimuthAngle < 2 || azimuthAngle > -2){
-			state = 'A';
-		}
-		else if(frontDistance < 0.3){
-			state = 'D';
-		}else if(azimuthAngle < -2){
-			state = 'C';
-		else if(AzimuthAngle > 60){
+		if(frontDistance < 0.4){
 			state = 'F';
+		}
+		else if(frontDistance > 0.8 && rightDistance > 0.3){
+			state = 'A';
+		}else if(rightDistance > (leftDistance + 0.01) ){
+			state = 'C';
 		}else{
-			pedalPosition = TURNSPEED_ANGLE*azimuthAngle;
-  			groundSteeringAngle = TURN_ANGLE*azimuthAngle;
+			pedalPosition = TURNSPEED_ANGLE;
+  			groundSteeringAngle = TURN_ANGLE;
 		}
 		break;
 
 	case 'C':
-		if(azimuthAngle < 2 || azimuthAngle > -2){
-			state = 'A';
-		}
-		else if(frontDistance < 0.3){
-			state = 'D';
-		}else if(azimuthAngle > 2){
-			state = 'B';
-		else if(azimuthAngle < -60){
+		if(frontDistance < 0.4){
 			state = 'E';
+		}
+		else if(frontDistance > 0.8 && leftDistance > 0.3){
+			state = 'A';
+		}else if(leftDistance > (rightDistance+0.01)){
+			state = 'B';
 		}else{
-			pedalPosition = TURNSPEED_ANGLE*azimuthAngle;
-  			groundSteeringAngle = -TURN_ANGLE*azimuthAngle;
+			pedalPosition = TURNSPEED_ANGLE;
+  			groundSteeringAngle = -TURN_ANGLE;
 		}
 
 		break;
 
 	case 'D':
-		if(frontDistance > 0.3){
-			state = 'A';
+		if(rearDistance < 0.3){
+			if(frontDistance > rearDistance)
+				state = 'A';
+		}else if(leftDistance > 0.3 && frontDistance > 0.2){
+			state = 'E';
+		}else if(rightDistance > 0.3 &&  frontDistance > 0.2){
+			state = 'F';
 		}else{
-			pedalPosition = -REVERSE_SPEED*(1-2*frontDistance);
+			pedalPosition = -REVERSE_SPEED;
   			groundSteeringAngle = 0.0f;
 		}
 		break;
 
 	case 'E':
-		if(azimuthAngle < 2 || azimuthAngle > -2){
-			state = 'A';
-		else if(azimuthAngle > 2){
-			state = 'B';
+		if(rearDistance < 0.4){
+			if(frontDistance > rearDistance)
+				state = 'A';
+		}else if(frontDistance > 0.7){
+			state = 'C';
+		}else if(rightDistance > leftDistance){
+			state = 'F';
 		}else{
-			pedalPosition = -REVERSETURNSPEED_ANGLE*azimuthAngle;
-  			groundSteeringAngle = -REVERSETURN_ANGLE*azimuthAngle;
+			pedalPosition = -REVERSETURNSPEED_ANGLE;
+  			groundSteeringAngle = -REVERSETURN_ANGLE;
 		}
 		break;
 
 	case 'F':
-		if(azimuthAngle < 2 || azimuthAngle > -2){
-			state = 'A';
-		else if(azimuthAngle < -2){
-			state = 'C';
+		if(rearDistance < 0.4){
+			if(frontDistance > rearDistance)
+				state = 'A';
+		}else if(frontDistance > 0.7){
+			state = 'B';
+		}else if(leftDistance > rightDistance){
+			state = 'E';
 		}else{
-			pedalPosition = -REVERSETURNSPEED_ANGLE*azimuthAngle;
-  			groundSteeringAngle = REVERSETURN_ANGLE*azimuthAngle;
+			pedalPosition = -REVERSETURNSPEED_ANGLE;
+  			groundSteeringAngle = REVERSETURN_ANGLE;
 		}
 		break;
 
@@ -217,8 +228,8 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
     m_pedalPositionRequest = pedalPositionRequest;
   }
 
-  std::cout << azimuthAngle << " " << distance <<std::endl;
-
+  //std::cout << "F = "<< frontDistance << " B = " << rearDistance << " L = " << leftDistance << " R = " << rightDistance << " State = " << state  <<std::endl;
+   std::cout << "x = " << x_pos << " y = " << y_pos << std::endl;
 }
 
 // TODO: This is a rough estimate, improve by looking into the sensor specifications.
@@ -230,4 +241,5 @@ double Behavior::convertIrVoltageToDistance(float voltage) const noexcept
   double sensorVoltage = (voltageDividerR1 + voltageDividerR2) / voltageDividerR2 * voltage;
   double distance = 0.001645*pow(sensorVoltage, 8) - 0.04791*pow(sensorVoltage,7) + 0.4231*pow(sensorVoltage,6) - 1.826*pow(sensorVoltage,5) + 4.495*pow(sensorVoltage,4) - 6.694*pow(sensorVoltage,3) + 6.115*pow(sensorVoltage,2) - 3.354*pow(sensorVoltage,1) + 1.016;
 return distance;
+  return distance;
 }
