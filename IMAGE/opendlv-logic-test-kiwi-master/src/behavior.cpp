@@ -81,6 +81,7 @@ void Behavior::setImage(opendlv::logic::sensation::Point const &image) noexcept{
 
 void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE, float REVERSE_SPEED, float REVERSETURNSPEED_ANGLE, float REVERSETURN_ANGLE) noexcept
 {
+
   opendlv::proxy::DistanceReading frontUltrasonicReading;
   opendlv::proxy::DistanceReading rearUltrasonicReading;
   opendlv::proxy::VoltageReading leftIrReading;
@@ -105,7 +106,7 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
   //float rearDistance = rearUltrasonicReading.distance();
   //double leftDistance = convertIrVoltageToDistance(leftIrReading.voltage());
   //double rightDistance = convertIrVoltageToDistance(rightIrReading.voltage());
-  float azimuthAngle = image.azimuthAngle();
+  float azimuthAngle = abs(image.azimuthAngle());
   float distance = image.distance();
 
   float pedalPosition = 0.0f;
@@ -122,29 +123,27 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
   switch(state){
 	case 'A':
 
-      		if(frontDistance < 0.3){
+      		if(frontDistance < 0.1){
 			state = 'D';
-		}else if(azimuthAngle > 2){
+		}else if(azimuthAngle > 0.15){
 			state = 'B';
-                }else if(azimuthAngle < -2){
+                }else if(azimuthAngle < -0.15){
 			state = 'C';
 		}else{
-			pedalPosition = FORWARD_SPEED*frontDistance;
+			pedalPosition = FORWARD_SPEED*distance;
   			groundSteeringAngle = 0.0f;
 		}
 
 		break;
 
 	case 'B':
-		if(azimuthAngle < 2 || azimuthAngle > -2){
+		if(azimuthAngle < 0.15 && azimuthAngle > -0.15){
 			state = 'A';
 		}
-		else if(frontDistance < 0.3){
+		else if(frontDistance < 0.1){
 			state = 'D';
-		}else if(azimuthAngle < -2){
+		}else if(azimuthAngle < -0.15){
 			state = 'C';
-		}else if(azimuthAngle > 60){
-			state = 'F';
 		}else{
 			pedalPosition = TURNSPEED_ANGLE*azimuthAngle;
   			groundSteeringAngle = TURN_ANGLE*azimuthAngle;
@@ -152,15 +151,13 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
 		break;
 
 	case 'C':
-		if(azimuthAngle < 2 || azimuthAngle > -2){
+		if(azimuthAngle < 0.15 && azimuthAngle > -0.15){
 			state = 'A';
 		}
-		else if(frontDistance < 0.3){
+		else if(frontDistance < 0.1){
 			state = 'D';
-		}else if(azimuthAngle > 2){
+		}else if(azimuthAngle > 0.15){
 			state = 'B';
-		}else if(azimuthAngle < -60){
-			state = 'E';
 		}else{
 			pedalPosition = TURNSPEED_ANGLE*azimuthAngle;
   			groundSteeringAngle = -TURN_ANGLE*azimuthAngle;
@@ -169,7 +166,7 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
 		break;
 
 	case 'D':
-		if(frontDistance > 0.3){
+		if(frontDistance > 0.1){
 			state = 'A';
 		}else{
 			pedalPosition = -REVERSE_SPEED*(1-2*frontDistance);
@@ -178,9 +175,9 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
 		break;
 
 	case 'E':
-		if(azimuthAngle < 2 || azimuthAngle > -2){
+		if(azimuthAngle < 0.15 && azimuthAngle > -0.15){
 			state = 'A';
-		}else if(azimuthAngle > 2){
+		}else if(azimuthAngle > 0.15){
 			state = 'B';
 		}else{
 			pedalPosition = -REVERSETURNSPEED_ANGLE*azimuthAngle;
@@ -189,9 +186,9 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
 		break;
 
 	case 'F':
-		if(azimuthAngle < 2 || azimuthAngle > -2){
+		if(azimuthAngle < 0.15 && azimuthAngle > -0.15){
 			state = 'A';
-		}else if(azimuthAngle < -2){
+		}else if(azimuthAngle < -0.15){
 			state = 'C';
 		}else{
 			pedalPosition = -REVERSETURNSPEED_ANGLE*azimuthAngle;
@@ -217,8 +214,8 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
     m_pedalPositionRequest = pedalPositionRequest;
   }
 
-  std::cout << "Angle = " <<azimuthAngle << " " << "Distance = " << distance << "Pedal position = " << pedalPosition << "GroundSteeringAngle = " << groundSteeringAngle << std::endl;
-
+  std::cout << "Angle = " <<azimuthAngle << " " << "Distance = " << distance << "Pedal position = " << pedalPosition << "GroundSteeringAngle = " << groundSteeringAngle << " State = " << state << std::endl;
+ 
 }
 
 // TODO: This is a rough estimate, improve by looking into the sensor specifications.
