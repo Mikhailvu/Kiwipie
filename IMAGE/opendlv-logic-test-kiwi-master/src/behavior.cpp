@@ -102,15 +102,15 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
   }
 
   float frontDistance = frontUltrasonicReading.distance();
-  float rearDistance = rearUltrasonicReading.distance();
-  double leftDistance = convertIrVoltageToDistance(leftIrReading.voltage());
-  double rightDistance = convertIrVoltageToDistance(rightIrReading.voltage());
+  //float rearDistance = rearUltrasonicReading.distance();
+  //double leftDistance = convertIrVoltageToDistance(leftIrReading.voltage());
+  //double rightDistance = convertIrVoltageToDistance(rightIrReading.voltage());
   float azimuthAngle = image.azimuthAngle();
   float distance = image.distance();
 
   float pedalPosition = 0.0f;
   float groundSteeringAngle = 0.0f;
-  double random = (double) rand()/ (RAND_MAX) ;
+  //double random = (double) rand()/ (RAND_MAX) ;
 
 // State A = FORWARD
 // State B = TURN LEFT
@@ -143,7 +143,7 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
 			state = 'D';
 		}else if(azimuthAngle < -2){
 			state = 'C';
-		else if(AzimuthAngle > 60){
+		}else if(azimuthAngle > 60){
 			state = 'F';
 		}else{
 			pedalPosition = TURNSPEED_ANGLE*azimuthAngle;
@@ -159,7 +159,7 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
 			state = 'D';
 		}else if(azimuthAngle > 2){
 			state = 'B';
-		else if(azimuthAngle < -60){
+		}else if(azimuthAngle < -60){
 			state = 'E';
 		}else{
 			pedalPosition = TURNSPEED_ANGLE*azimuthAngle;
@@ -180,7 +180,7 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
 	case 'E':
 		if(azimuthAngle < 2 || azimuthAngle > -2){
 			state = 'A';
-		else if(azimuthAngle > 2){
+		}else if(azimuthAngle > 2){
 			state = 'B';
 		}else{
 			pedalPosition = -REVERSETURNSPEED_ANGLE*azimuthAngle;
@@ -191,7 +191,7 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
 	case 'F':
 		if(azimuthAngle < 2 || azimuthAngle > -2){
 			state = 'A';
-		else if(azimuthAngle < -2){
+		}else if(azimuthAngle < -2){
 			state = 'C';
 		}else{
 			pedalPosition = -REVERSETURNSPEED_ANGLE*azimuthAngle;
@@ -217,7 +217,7 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
     m_pedalPositionRequest = pedalPositionRequest;
   }
 
-  std::cout << azimuthAngle << " " << distance <<std::endl;
+  std::cout << "Angle = " <<azimuthAngle << " " << "Distance = " << distance << "Pedal position = " << pedalPosition << "GroundSteeringAngle = " << groundSteeringAngle << std::endl;
 
 }
 
