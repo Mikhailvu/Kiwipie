@@ -36,10 +36,11 @@ int32_t main(int32_t argc, char **argv) {
     float const REVERSE_SPEED = std::stof(commandlineArguments["reverse_speed"]);
     float const REVERSETURNSPEED_ANGLE = std::stof(commandlineArguments["reverseturnspeed_angle"]);
     float const REVERSETURN_ANGLE = std::stof(commandlineArguments["reverseturn_angle"]);
+    float const SCAN = std::stof(commandlineArguments["scan"]);
+    float const WALL = std::stof(commandlineArguments["wall"]);
     float const FREQ = std::stof(commandlineArguments["freq"]);
     float time = 0;
     float dt = 1/FREQ;
-
     Behavior behavior;
 
     auto onDistanceReading{[&behavior](cluon::data::Envelope &&envelope)
@@ -70,17 +71,19 @@ int32_t main(int32_t argc, char **argv) {
         }
       }};
 
+
     cluon::OD4Session od4{CID};
     od4.dataTrigger(opendlv::proxy::DistanceReading::ID(), onDistanceReading);
     od4.dataTrigger(opendlv::proxy::VoltageReading::ID(), onVoltageReading);
     od4.dataTrigger(opendlv::logic::sensation::Point::ID(), onImageReading);
 
+
         
 
-    auto atFrequency{[&VERBOSE, &behavior, &od4, &dt, &time, &FORWARD_SPEED, &TURNSPEED_ANGLE, &TURN_ANGLE, &REVERSE_SPEED, &REVERSETURNSPEED_ANGLE, REVERSETURN_ANGLE]() -> bool
+    auto atFrequency{[&VERBOSE, &behavior, &od4, &dt, &time, &FORWARD_SPEED, &TURNSPEED_ANGLE, &TURN_ANGLE, &REVERSE_SPEED, &REVERSETURNSPEED_ANGLE, &REVERSETURN_ANGLE, &SCAN, &WALL]() -> bool
       {
         if(time >= 30){
-        	behavior.step(FORWARD_SPEED, TURNSPEED_ANGLE, TURN_ANGLE, REVERSE_SPEED, REVERSETURNSPEED_ANGLE, REVERSETURN_ANGLE);
+        	behavior.step(FORWARD_SPEED, TURNSPEED_ANGLE, TURN_ANGLE, REVERSE_SPEED, REVERSETURNSPEED_ANGLE, REVERSETURN_ANGLE, SCAN, WALL);
 	}
         auto groundSteeringAngleRequest = behavior.getGroundSteeringAngle();
         auto pedalPositionRequest = behavior.getPedalPositionRequest();
@@ -94,9 +97,9 @@ int32_t main(int32_t argc, char **argv) {
             << " and pedal position is " << pedalPositionRequest.position() << std::endl;
         }
 	time += dt;
+
         return true;
       }};
-
     od4.timeTrigger(FREQ, atFrequency);
   }
   return retCode;

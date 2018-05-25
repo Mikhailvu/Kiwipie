@@ -41,7 +41,7 @@ class Behavior {
   void setLeftIr(opendlv::proxy::VoltageReading const &) noexcept;
   void setRightIr(opendlv::proxy::VoltageReading const &) noexcept;
   void setImage(opendlv::logic::sensation::Point const &) noexcept;
-  void step(float,float,float,float,float,float) noexcept;
+  void step(float,float,float,float,float,float,float,float) noexcept;
 
  private:
   double convertIrVoltageToDistance(float) const noexcept;

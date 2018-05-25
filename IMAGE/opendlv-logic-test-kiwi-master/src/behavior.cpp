@@ -18,6 +18,7 @@
 #include "behavior.hpp"
 #include <iostream>
 #include <tgmath.h>
+#include <math.h>
 
 Behavior::Behavior() noexcept:
   m_frontUltrasonicReading{},
@@ -79,7 +80,7 @@ void Behavior::setImage(opendlv::logic::sensation::Point const &image) noexcept{
   m_image = image;
 }
 
-void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE, float REVERSE_SPEED, float REVERSETURNSPEED_ANGLE, float REVERSETURN_ANGLE) noexcept
+void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE, float REVERSE_SPEED, float REVERSETURNSPEED_ANGLE, float REVERSETURN_ANGLE, float SCAN, float WALL) noexcept
 {
 
   opendlv::proxy::DistanceReading frontUltrasonicReading;
@@ -106,7 +107,7 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
   //float rearDistance = rearUltrasonicReading.distance();
   //double leftDistance = convertIrVoltageToDistance(leftIrReading.voltage());
   //double rightDistance = convertIrVoltageToDistance(rightIrReading.voltage());
-  float azimuthAngle = abs(image.azimuthAngle());
+  float azimuthAngle = fabs(image.azimuthAngle());
   float distance = image.distance();
 
   float pedalPosition = 0.0f;
@@ -123,11 +124,11 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
   switch(state){
 	case 'A':
 
-      		if(frontDistance < 0.1){
+      		if(frontDistance < WALL){
 			state = 'D';
-		}else if(azimuthAngle > 0.15){
+		}else if(azimuthAngle > SCAN){
 			state = 'B';
-                }else if(azimuthAngle < -0.15){
+                }else if(azimuthAngle < -SCAN){
 			state = 'C';
 		}else{
 			pedalPosition = FORWARD_SPEED*distance;
@@ -137,12 +138,12 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
 		break;
 
 	case 'B':
-		if(azimuthAngle < 0.15 && azimuthAngle > -0.15){
+		if(azimuthAngle < SCAN && azimuthAngle > -SCAN){
 			state = 'A';
 		}
-		else if(frontDistance < 0.1){
+		else if(frontDistance < WALL){
 			state = 'D';
-		}else if(azimuthAngle < -0.15){
+		}else if(azimuthAngle < -SCAN){
 			state = 'C';
 		}else{
 			pedalPosition = TURNSPEED_ANGLE*azimuthAngle;
@@ -151,12 +152,12 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
 		break;
 
 	case 'C':
-		if(azimuthAngle < 0.15 && azimuthAngle > -0.15){
+		if(azimuthAngle < SCAN && azimuthAngle > -SCAN){
 			state = 'A';
 		}
-		else if(frontDistance < 0.1){
+		else if(frontDistance < WALL){
 			state = 'D';
-		}else if(azimuthAngle > 0.15){
+		}else if(azimuthAngle > SCAN){
 			state = 'B';
 		}else{
 			pedalPosition = TURNSPEED_ANGLE*azimuthAngle;
@@ -166,7 +167,7 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
 		break;
 
 	case 'D':
-		if(frontDistance > 0.1){
+		if(frontDistance > WALL){
 			state = 'A';
 		}else{
 			pedalPosition = -REVERSE_SPEED*(1-2*frontDistance);
@@ -175,9 +176,9 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
 		break;
 
 	case 'E':
-		if(azimuthAngle < 0.15 && azimuthAngle > -0.15){
+		if(azimuthAngle < SCAN && azimuthAngle > -SCAN){
 			state = 'A';
-		}else if(azimuthAngle > 0.15){
+		}else if(azimuthAngle > SCAN){
 			state = 'B';
 		}else{
 			pedalPosition = -REVERSETURNSPEED_ANGLE*azimuthAngle;
@@ -186,9 +187,9 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
 		break;
 
 	case 'F':
-		if(azimuthAngle < 0.15 && azimuthAngle > -0.15){
+		if(azimuthAngle < SCAN && azimuthAngle > -SCAN){
 			state = 'A';
-		}else if(azimuthAngle < -0.15){
+		}else if(azimuthAngle < -SCAN){
 			state = 'C';
 		}else{
 			pedalPosition = -REVERSETURNSPEED_ANGLE*azimuthAngle;
@@ -214,7 +215,7 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
     m_pedalPositionRequest = pedalPositionRequest;
   }
 
-  std::cout << "Angle = " <<azimuthAngle << " " << "Distance = " << distance << "Pedal position = " << pedalPosition << "GroundSteeringAngle = " << groundSteeringAngle << " State = " << state << std::endl;
+  std::cout << "Angle = " << azimuthAngle << " DistanceImage = " << distance << " DistanceSensor = " << frontDistance << " Pedal position = " << pedalPosition << "GroundSteeringAngle = " << groundSteeringAngle << " State = " << state << std::endl;
  
 }
 
