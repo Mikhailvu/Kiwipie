@@ -103,7 +103,13 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
     image = m_image;
   }
 
-  float frontDistance = frontUltrasonicReading.distance();
+  float frontDistance;
+  if(frontUltrasonicReading.distance() > 0.3){
+     frontDistance = 0.3f;
+  }else{
+     frontDistance = frontUltrasonicReading.distance();
+  }
+   
   //float rearDistance = rearUltrasonicReading.distance();
   //double leftDistance = convertIrVoltageToDistance(leftIrReading.voltage());
   //double rightDistance = convertIrVoltageToDistance(rightIrReading.voltage());
@@ -131,7 +137,7 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
                 }else if(azimuthAngle < -SCAN){
 			state = 'C';
 		}else{
-			pedalPosition = FORWARD_SPEED*distance;
+			pedalPosition = FORWARD_SPEED*frontDistance;
   			groundSteeringAngle = 0.0f;
 		}
 
@@ -170,7 +176,7 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
 		if(frontDistance > WALL){
 			state = 'A';
 		}else{
-			pedalPosition = -REVERSE_SPEED*(1-2*frontDistance);
+			pedalPosition = -REVERSE_SPEED;
   			groundSteeringAngle = 0.0f;
 		}
 		break;
