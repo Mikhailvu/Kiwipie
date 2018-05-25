@@ -107,7 +107,7 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
   //float rearDistance = rearUltrasonicReading.distance();
   //double leftDistance = convertIrVoltageToDistance(leftIrReading.voltage());
   //double rightDistance = convertIrVoltageToDistance(rightIrReading.voltage());
-  float azimuthAngle = fabs(image.azimuthAngle());
+  float azimuthAngle = image.azimuthAngle();
   float distance = image.distance();
 
   float pedalPosition = 0.0f;
@@ -146,8 +146,8 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
 		}else if(azimuthAngle < -SCAN){
 			state = 'C';
 		}else{
-			pedalPosition = TURNSPEED_ANGLE*azimuthAngle;
-  			groundSteeringAngle = TURN_ANGLE*azimuthAngle;
+			pedalPosition = TURNSPEED_ANGLE;
+  			groundSteeringAngle = TURN_ANGLE*fabs(azimuthAngle);
 		}
 		break;
 
@@ -160,8 +160,8 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
 		}else if(azimuthAngle > SCAN){
 			state = 'B';
 		}else{
-			pedalPosition = TURNSPEED_ANGLE*azimuthAngle;
-  			groundSteeringAngle = -TURN_ANGLE*azimuthAngle;
+			pedalPosition = TURNSPEED_ANGLE;
+  			groundSteeringAngle = -TURN_ANGLE*fabs(azimuthAngle);
 		}
 
 		break;
@@ -181,8 +181,8 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
 		}else if(azimuthAngle > SCAN){
 			state = 'B';
 		}else{
-			pedalPosition = -REVERSETURNSPEED_ANGLE*azimuthAngle;
-  			groundSteeringAngle = -REVERSETURN_ANGLE*azimuthAngle;
+			pedalPosition = -REVERSETURNSPEED_ANGLE;
+  			groundSteeringAngle = -REVERSETURN_ANGLE*fabs(azimuthAngle);
 		}
 		break;
 
@@ -192,8 +192,8 @@ void Behavior::step(float FORWARD_SPEED, float TURNSPEED_ANGLE, float TURN_ANGLE
 		}else if(azimuthAngle < -SCAN){
 			state = 'C';
 		}else{
-			pedalPosition = -REVERSETURNSPEED_ANGLE*azimuthAngle;
-  			groundSteeringAngle = REVERSETURN_ANGLE*azimuthAngle;
+			pedalPosition = -REVERSETURNSPEED_ANGLE;
+  			groundSteeringAngle = REVERSETURN_ANGLE*fabs(azimuthAngle);
 		}
 		break;
 
